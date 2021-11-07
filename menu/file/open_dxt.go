@@ -2,9 +2,7 @@ package file
 
 import (
 	"dxt-editor/dxt"
-	"image"
 	"io/ioutil"
-	"os"
 
 	xdOpen "dxt-editor/dialog/open"
 	"dxt-editor/global"
@@ -15,7 +13,6 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
-	"golang.org/x/image/bmp"
 )
 
 func OpenDXTMenuItem(w fyne.Window) *fyne.MenuItem {
@@ -31,20 +28,7 @@ func OpenDXTMenuItem(w fyne.Window) *fyne.MenuItem {
 				return
 			}
 
-			global.DXTFile = dxt.NewBuffer(data).ParseDXT()
-
-			subimg := global.DXTFile.Image.SubImage(image.Rect(65, 65*6, 65*2, 65*7))
-
-			f, err := os.Create("test.bmp")
-			if err != nil {
-				dialog.NewError(err, w).Show()
-				return
-			}
-			err = bmp.Encode(f, subimg)
-			if err != nil {
-				dialog.NewError(err, w).Show()
-				return
-			}
+			global.DXTFile = dxt.NewBuffer(data).ParseDXT(uc.URI().Path())
 
 			imgCanvas := canvas.NewImageFromImage(global.DXTFile.Image)
 			imgCanvas.FillMode = canvas.ImageFillOriginal

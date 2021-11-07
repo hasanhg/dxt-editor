@@ -85,7 +85,7 @@ func drawObject(uc fyne.URIReadCloser, obj *uif.Object) []fyne.CanvasObject {
 			}
 		}
 
-		dxtFile := dxt.NewBuffer(data).ParseDXT()
+		dxtFile := dxt.NewBuffer(data).ParseDXT(uc.URI().Path())
 
 		x0 := obj.Crop.Min.X * float32(dxtFile.Image.Rect.Size().X)
 		x1 := obj.Crop.Max.X * float32(dxtFile.Image.Rect.Size().X)

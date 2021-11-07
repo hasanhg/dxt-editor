@@ -12,6 +12,7 @@ import (
 type DXTFile struct {
 	Compression string
 	Header      string
+	Path        string
 	Image       *image.RGBA
 }
 
@@ -24,8 +25,8 @@ func NewBuffer(data []byte) *Buffer {
 	return &Buffer{data: data, offset: 0}
 }
 
-func (b *Buffer) ParseDXT() *DXTFile {
-	dxtFile := &DXTFile{}
+func (b *Buffer) ParseDXT(filePath string) *DXTFile {
+	dxtFile := &DXTFile{Path: filePath}
 	headerSize := b.Read(UINT32).(uint32)
 	header := utils.BytesToString(b.ReadN(uint64(headerSize)))
 	dxtFile.Header = header
