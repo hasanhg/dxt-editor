@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"path/filepath"
 	"reflect"
+	"strings"
 )
 
 func check(e error) {
@@ -128,4 +130,8 @@ func BytesToString(data []byte) string {
 		}
 	}
 	return s
+}
+
+func FileNameWithoutExtension(fileName string) string {
+	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
 }

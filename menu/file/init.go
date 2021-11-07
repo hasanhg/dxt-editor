@@ -6,5 +6,6 @@ func FileMenu(w fyne.Window) *fyne.Menu {
 	return fyne.NewMenu("File",
 		NewMenuItem(w),
 		OpenMenuItem(w),
+		ExportMenuItem(w),
 	)
 }

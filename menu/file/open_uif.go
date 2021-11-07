@@ -33,6 +33,7 @@ func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
 				return
 			}
 
+			global.CurrentDirectory = filepath.Dir(uc.URI().Path())
 			data, err := ioutil.ReadAll(uc)
 			if err != nil {
 				dialog.NewError(err, w).Show()
