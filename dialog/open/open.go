@@ -70,6 +70,7 @@ type OpenDialog struct {
 	startingLocation fyne.ListableURI
 	// this will be the initial filename in a OpenDialog in save mode
 	initialFileName string
+	fileType        string
 }
 
 // Declare conformity to Dialog interface
@@ -133,7 +134,7 @@ func (f *openDialog) makeUI() fyne.CanvasObject {
 
 	f.breadcrumb = container.NewHBox()
 	f.breadcrumbScroll = container.NewHScroll(container.NewPadded(f.breadcrumb))
-	title := label + " File"
+	title := fmt.Sprintf("%s %s File", label, f.file.fileType)
 	if f.file.isDirectory() {
 		title = label + " Folder"
 	}
@@ -588,8 +589,8 @@ func (f *OpenDialog) SetFilter(filter storage.FileFilter) {
 // when the user cancels or when nothing is selected.
 //
 // The dialog will appear over the window specified when Show() is called.
-func NewFileOpen(callback func(fyne.URIReadCloser, error), parent fyne.Window) *OpenDialog {
-	dialog := &OpenDialog{callback: callback, parent: parent}
+func NewFileOpen(fileType string, callback func(fyne.URIReadCloser, error), parent fyne.Window) *OpenDialog {
+	dialog := &OpenDialog{callback: callback, parent: parent, fileType: fileType}
 	return dialog
 }
 
@@ -598,8 +599,8 @@ func NewFileOpen(callback func(fyne.URIReadCloser, error), parent fyne.Window) *
 // will be nil when the user cancels or when nothing is selected.
 //
 // The dialog will appear over the window specified.
-func ShowFileOpen(callback func(fyne.URIReadCloser, error), parent fyne.Window) {
-	dialog := NewFileOpen(callback, parent)
+func ShowFileOpen(fileType string, callback func(fyne.URIReadCloser, error), parent fyne.Window) {
+	dialog := NewFileOpen(fileType, callback, parent)
 	if fileOpenOSOverride(dialog) {
 		return
 	}

@@ -39,7 +39,7 @@ func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
 }
 
 func openUIF(w fyne.Window) {
-	fd := xdOpen.NewFileOpen(func(uc fyne.URIReadCloser, e error) {
+	fd := xdOpen.NewFileOpen("UIF", func(uc fyne.URIReadCloser, e error) {
 		if uc == nil {
 			return
 		}

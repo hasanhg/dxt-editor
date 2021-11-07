@@ -29,7 +29,7 @@ func OpenDXTMenuItem(w fyne.Window) *fyne.MenuItem {
 }
 
 func openDXT(w fyne.Window) {
-	fd := xdOpen.NewFileOpen(func(uc fyne.URIReadCloser, e error) {
+	fd := xdOpen.NewFileOpen("DXT", func(uc fyne.URIReadCloser, e error) {
 		if uc == nil {
 			return
 		}

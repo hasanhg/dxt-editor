@@ -1,8 +1,9 @@
 package file
 
 import (
+	xdOpen "dxt-editor/dialog/open"
+
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/storage"
 )
@@ -19,7 +20,7 @@ func OpenBMPMenuItem(w fyne.Window) *fyne.MenuItem {
 }
 
 func openBMP(w fyne.Window) {
-	fd := dialog.NewFileOpen(func(uc fyne.URIReadCloser, e error) {}, w)
+	fd := xdOpen.NewFileOpen("BMP", func(uc fyne.URIReadCloser, e error) {}, w)
 	fd.SetFilter(storage.NewExtensionFileFilter([]string{".bmp"}))
 	fd.Show()
 }
