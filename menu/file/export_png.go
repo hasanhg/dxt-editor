@@ -13,8 +13,9 @@ import (
 	"os"
 	"path/filepath"
 
+	xdSelectFolder "dxt-editor/dialog/select_folder"
+
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 )
 
@@ -30,7 +31,7 @@ func ExportPNGMenuItem(w fyne.Window) *fyne.MenuItem {
 }
 
 func onExportPNG(w fyne.Window) {
-	fd := dialog.NewFolderOpen(func(lu fyne.ListableURI, e error) {
+	fd := xdSelectFolder.NewFolderOpen(func(lu fyne.ListableURI, e error) {
 		if lu == nil {
 			return
 		}
