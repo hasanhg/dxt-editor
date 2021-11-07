@@ -15,19 +15,29 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 )
 
 func ExportPNGMenuItem(w fyne.Window) *fyne.MenuItem {
-	return fyne.NewMenuItem("Export PNG", func() {
-		fd := dialog.NewFolderOpen(func(lu fyne.ListableURI, e error) {
-			if lu == nil {
-				return
-			}
-			export(lu)
-		}, w)
-		//fd.SetFilter(storage.NewExtensionFileFilter([]string{".png"}))
-		fd.Show()
+	ctrlShiftG := &desktop.CustomShortcut{KeyName: fyne.KeyG, Modifier: desktop.ControlModifier | desktop.ShiftModifier}
+	w.Canvas().AddShortcut(ctrlShiftG, func(shortcut fyne.Shortcut) {
+		onExportPNG(w)
 	})
+
+	return fyne.NewMenuItem("Export PNG\t(CTRL + Shift + G)", func() {
+		onExportPNG(w)
+	})
+}
+
+func onExportPNG(w fyne.Window) {
+	fd := dialog.NewFolderOpen(func(lu fyne.ListableURI, e error) {
+		if lu == nil {
+			return
+		}
+		export(lu)
+	}, w)
+	//fd.SetFilter(storage.NewExtensionFileFilter([]string{".png"}))
+	fd.Show()
 }
 
 func export(lu fyne.ListableURI) {

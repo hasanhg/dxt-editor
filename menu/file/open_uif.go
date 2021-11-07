@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
@@ -27,26 +28,35 @@ var (
 )
 
 func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
-	return fyne.NewMenuItem("Open UIF", func() {
-		fd := xdOpen.NewFileOpen(func(uc fyne.URIReadCloser, e error) {
-			if uc == nil {
-				return
-			}
-
-			global.CurrentDirectory = filepath.Dir(uc.URI().Path())
-			data, err := ioutil.ReadAll(uc)
-			if err != nil {
-				dialog.NewError(err, w).Show()
-				return
-			}
-
-			w.SetTitle(fmt.Sprintf("UIF Editor - %s", uc.URI().Path()))
-			global.UIFFile = uif.NewBuffer(data).ParseUIF()
-			refreshUIFEditor(w, uc)
-		}, w)
-		fd.SetFilter(storage.NewExtensionFileFilter([]string{".uif"}))
-		fd.Show()
+	ctrlU := &desktop.CustomShortcut{KeyName: fyne.KeyU, Modifier: desktop.ControlModifier}
+	w.Canvas().AddShortcut(ctrlU, func(shortcut fyne.Shortcut) {
+		openUIF(w)
 	})
+
+	return fyne.NewMenuItem("Open UIF\t(CTRL + U)", func() {
+		openUIF(w)
+	})
+}
+
+func openUIF(w fyne.Window) {
+	fd := xdOpen.NewFileOpen(func(uc fyne.URIReadCloser, e error) {
+		if uc == nil {
+			return
+		}
+
+		global.CurrentDirectory = filepath.Dir(uc.URI().Path())
+		data, err := ioutil.ReadAll(uc)
+		if err != nil {
+			dialog.NewError(err, w).Show()
+			return
+		}
+
+		w.SetTitle(fmt.Sprintf("UIF Editor - %s", uc.URI().Path()))
+		global.UIFFile = uif.NewBuffer(data).ParseUIF()
+		refreshUIFEditor(w, uc)
+	}, w)
+	fd.SetFilter(storage.NewExtensionFileFilter([]string{".uif"}))
+	fd.Show()
 }
 
 func refreshUIFEditor(w fyne.Window, uc fyne.URIReadCloser) {
