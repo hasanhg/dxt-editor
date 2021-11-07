@@ -2,6 +2,7 @@ package file
 
 import (
 	"dxt-editor/dxt"
+	"fmt"
 	"io/ioutil"
 
 	xdOpen "dxt-editor/dialog/open"
@@ -28,6 +29,7 @@ func OpenDXTMenuItem(w fyne.Window) *fyne.MenuItem {
 				return
 			}
 
+			w.SetTitle(fmt.Sprintf("DXT Editor - %s", uc.URI().Path()))
 			global.DXTFile = dxt.NewBuffer(data).ParseDXT(uc.URI().Path())
 
 			imgCanvas := canvas.NewImageFromImage(global.DXTFile.Image)
