@@ -55,3 +55,15 @@ func init() {
 		rTypeTitles[title] = typ
 	}
 }
+
+func (t *ObjectType) String() string {
+	switch *t {
+	case OT_BASE:
+		return "Base"
+	case OT_IMAGE:
+		return "Image"
+	case OT_AREA:
+		return "Area"
+	}
+	return ""
+}

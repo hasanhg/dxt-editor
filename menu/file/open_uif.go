@@ -18,6 +18,10 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+var (
+	selectedObject *uif.Object
+)
+
 func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
 	return fyne.NewMenuItem("Open UIF", func() {
 		fd := xdOpen.NewFileOpen(func(uc fyne.URIReadCloser, e error) {
@@ -34,7 +38,7 @@ func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
 			uifFile := uif.NewBuffer(data).ParseUIF()
 			split := container.NewHSplit(
 				container.New(layout.NewCenterLayout(), drawObject(uifFile.Root)...),
-				drawHierarchy(uifFile),
+				drawHierarchy(w, uifFile),
 			)
 			split.Offset = 0.5
 
@@ -78,7 +82,7 @@ func drawObject(obj *uif.Object) []fyne.CanvasObject {
 	return arr
 }
 
-func drawHierarchy(uifFile *uif.UIFFile) fyne.CanvasObject {
+func drawHierarchy(w fyne.Window, uifFile *uif.UIFFile) fyne.CanvasObject {
 	data := map[string][]string{}
 	objects := map[string]*uif.Object{}
 	for _, child := range uifFile.Root.Children {
@@ -89,6 +93,10 @@ func drawHierarchy(uifFile *uif.UIFFile) fyne.CanvasObject {
 	objects[uifFile.Root.ID] = uifFile.Root
 	tree := widget.NewTreeWithStrings(data)
 	tree.OpenAllBranches()
+
+	props := container.NewBorder(nil, nil, nil, nil)
+	props.Hide()
+
 	tree.OnSelected = func(uid widget.TreeNodeID) {
 		obj, ok := objects[uid]
 		if !ok {
@@ -96,10 +104,12 @@ func drawHierarchy(uifFile *uif.UIFFile) fyne.CanvasObject {
 			return
 		}
 
+		drawProperties(obj, props)
+		w.Canvas().Refresh(props)
 		fmt.Printf("%+v\n", obj)
 	}
 
-	return container.NewBorder(nil, nil, nil, nil, container.NewVSplit(tree, nil))
+	return container.NewBorder(nil, nil, nil, nil, container.NewVSplit(tree, container.New(layout.NewAdaptiveGridLayout(1), props)))
 }
 
 func getChildren(data *map[string][]string, objects *map[string]*uif.Object, parent, child *uif.Object) {
@@ -108,4 +118,71 @@ func getChildren(data *map[string][]string, objects *map[string]*uif.Object, par
 	}
 	(*data)[parent.ID] = append((*data)[parent.ID], child.ID)
 	(*objects)[child.ID] = child
+}
+
+func drawProperties(obj *uif.Object, props *fyne.Container) {
+	props.Objects = []fyne.CanvasObject{}
+
+	idWidget := widget.NewEntry()
+	idWidget.SetText(obj.ID)
+
+	nameWidget := widget.NewEntry()
+	nameWidget.SetText(obj.Name)
+
+	typeWidget := widget.NewEntry()
+	typeWidget.SetText(obj.Type.String())
+
+	xRectWidget := widget.NewEntry()
+	xRectWidget.SetText(fmt.Sprintf("%d", obj.Rect.Min.X))
+
+	yRectWidget := widget.NewEntry()
+	yRectWidget.SetText(fmt.Sprintf("%d", obj.Rect.Min.Y))
+
+	widthRectWidget := widget.NewEntry()
+	widthRectWidget.SetText(fmt.Sprintf("%d", obj.Rect.Max.X-obj.Rect.Min.X))
+
+	heightRectWidget := widget.NewEntry()
+	heightRectWidget.SetText(fmt.Sprintf("%d", obj.Rect.Max.Y-obj.Rect.Min.Y))
+
+	_props := []fyne.CanvasObject{container.NewCenter(widget.NewLabel("Common")),
+		widget.NewSeparator(),
+		widget.NewForm(
+			widget.NewFormItem("ID", idWidget),
+			widget.NewFormItem("Name", nameWidget),
+			widget.NewFormItem("Type", typeWidget),
+		),
+		widget.NewSeparator(),
+		container.NewCenter(widget.NewLabel("Rectangle")),
+		widget.NewSeparator(),
+		widget.NewForm(
+			widget.NewFormItem("X", xRectWidget),
+			widget.NewFormItem("Y", yRectWidget),
+			widget.NewFormItem("Width", widthRectWidget),
+			widget.NewFormItem("Height", heightRectWidget),
+		),
+	}
+
+	if obj.Type.String() != "" {
+		_props = append(_props,
+			widget.NewSeparator(),
+			container.NewCenter(widget.NewLabel(obj.Type.String())),
+			widget.NewSeparator(),
+		)
+	}
+
+	switch obj.Type {
+	case uif.OT_IMAGE:
+		dxtWidget := widget.NewEntry()
+		dxtWidget.SetText(obj.Texture)
+		_props = append(_props,
+			widget.NewForm(
+				widget.NewFormItem("Texture", dxtWidget),
+			),
+		)
+	}
+
+	props.Add(container.NewVScroll(
+		container.NewVBox(_props...),
+	))
+	props.Show()
 }
