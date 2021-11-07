@@ -20,6 +20,9 @@ func NewMenuItem(w fyne.Window) *fyne.MenuItem {
 }
 
 func onNew(w fyne.Window) {
+	if global.Dialog != nil {
+		return
+	}
 	global.DXTFile = nil
 	global.UIFFile = nil
 	w.SetTitle(global.CustomTitle)

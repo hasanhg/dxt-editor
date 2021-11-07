@@ -39,7 +39,12 @@ func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
 }
 
 func openUIF(w fyne.Window) {
+	if global.Dialog != nil {
+		return
+	}
+
 	fd := xdOpen.NewFileOpen("UIF", func(uc fyne.URIReadCloser, e error) {
+		defer func() { global.Dialog = nil }()
 		if uc == nil {
 			return
 		}
@@ -55,8 +60,10 @@ func openUIF(w fyne.Window) {
 		global.UIFFile = uif.NewBuffer(data).ParseUIF()
 		refreshUIFEditor(w, uc)
 	}, w)
+
 	fd.SetFilter(storage.NewExtensionFileFilter([]string{".uif"}))
 	fd.Show()
+	global.Dialog = fd
 }
 
 func refreshUIFEditor(w fyne.Window, uc fyne.URIReadCloser) {

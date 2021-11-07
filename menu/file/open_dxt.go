@@ -29,7 +29,12 @@ func OpenDXTMenuItem(w fyne.Window) *fyne.MenuItem {
 }
 
 func openDXT(w fyne.Window) {
+	if global.Dialog != nil {
+		return
+	}
+
 	fd := xdOpen.NewFileOpen("DXT", func(uc fyne.URIReadCloser, e error) {
+		defer func() { global.Dialog = nil }()
 		if uc == nil {
 			return
 		}
@@ -63,5 +68,7 @@ func openDXT(w fyne.Window) {
 		w.Content().Refresh()
 	}, w)
 	fd.SetFilter(storage.NewExtensionFileFilter([]string{".dxt"}))
+
 	fd.Show()
+	global.Dialog = fd
 }

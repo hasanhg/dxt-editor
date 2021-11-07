@@ -31,14 +31,20 @@ func ExportPNGMenuItem(w fyne.Window) *fyne.MenuItem {
 }
 
 func onExportPNG(w fyne.Window) {
+	if global.Dialog != nil {
+		return
+	}
+
 	fd := xdSelectFolder.NewFolderOpen(func(lu fyne.ListableURI, e error) {
+		defer func() { global.Dialog = nil }()
 		if lu == nil {
 			return
 		}
 		export(lu)
 	}, w)
-	//fd.SetFilter(storage.NewExtensionFileFilter([]string{".png"}))
+
 	fd.Show()
+	global.Dialog = fd
 }
 
 func export(lu fyne.ListableURI) {
