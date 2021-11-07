@@ -9,6 +9,7 @@ import (
 	"image"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -36,9 +37,10 @@ func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
 				return
 			}
 
+			w.SetTitle(fmt.Sprintf("UIF Editor - %s", uc.URI().Path()))
 			global.UIFFile = uif.NewBuffer(data).ParseUIF()
 			split := container.NewHSplit(
-				container.New(layout.NewCenterLayout(), drawObject(global.UIFFile.Root)...),
+				container.New(layout.NewCenterLayout(), drawObject(uc, global.UIFFile.Root)...),
 				drawHierarchy(w, global.UIFFile),
 			)
 			split.Offset = 0.5
@@ -54,15 +56,26 @@ func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
 	})
 }
 
-func drawObject(obj *uif.Object) []fyne.CanvasObject {
+func drawObject(uc fyne.URIReadCloser, obj *uif.Object) []fyne.CanvasObject {
 	arr := []fyne.CanvasObject{}
 	for _, ch := range obj.Children {
-		arr = append(arr, drawObject(ch)...)
+		arr = append(arr, drawObject(uc, ch)...)
 	}
 	switch obj.Type {
 	case uif.OT_BASE:
 	case uif.OT_IMAGE:
-		data, _ := ioutil.ReadFile("C:\\Users\\gurso\\Desktop\\PS\\ui\\Icon_Acc.dxt")
+		p := filepath.Dir(uc.URI().Path())
+		p = filepath.Join(p, obj.Texture)
+		data, err := ioutil.ReadFile(p)
+		if err != nil {
+			p = filepath.Dir(filepath.Dir(uc.URI().Path()))
+			p = filepath.Join(p, obj.Texture)
+			data, err = ioutil.ReadFile(p)
+			if err != nil {
+				return nil
+			}
+		}
+
 		dxtFile := dxt.NewBuffer(data).ParseDXT()
 
 		x0 := obj.Crop.Min.X * float32(dxtFile.Image.Rect.Size().X)
