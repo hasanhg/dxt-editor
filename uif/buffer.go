@@ -24,6 +24,7 @@ type Object struct {
 	Tail       []byte
 	Type       ObjectType
 	Children   []*Object
+	Visible    bool
 
 	// Image properties
 	Texture        string
@@ -54,7 +55,7 @@ func (b *Buffer) ParseUIF() *UIFFile {
 }
 
 func (b *Buffer) readObj(uifFile *UIFFile, otype ObjectType) *Object {
-	obj := &Object{}
+	obj := &Object{Visible: true}
 
 	nameSize := b.Read(UINT32).(uint32)
 	obj.Name = utils.BytesToString(b.ReadN(uint64(nameSize)))

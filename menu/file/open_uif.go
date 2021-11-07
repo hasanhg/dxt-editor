@@ -21,7 +21,9 @@ import (
 )
 
 var (
-	selectedObject *uif.Object
+	selectedObject  *uif.Object
+	propertiesTree  *widget.Tree
+	selectedPropUID string
 )
 
 func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
@@ -39,25 +41,31 @@ func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
 
 			w.SetTitle(fmt.Sprintf("UIF Editor - %s", uc.URI().Path()))
 			global.UIFFile = uif.NewBuffer(data).ParseUIF()
-			split := container.NewHSplit(
-				container.New(layout.NewCenterLayout(), drawObject(uc, global.UIFFile.Root)...),
-				drawHierarchy(w, global.UIFFile),
-			)
-			split.Offset = 0.5
-
-			w.SetContent(split)
-			w.Resize(split.MinSize().Max(fyne.NewPos(512, 512)))
-			w.Canvas().Refresh(split)
-			w.Content().Refresh()
-
+			refreshUIFEditor(w, uc)
 		}, w)
 		fd.SetFilter(storage.NewExtensionFileFilter([]string{".uif"}))
 		fd.Show()
 	})
 }
 
+func refreshUIFEditor(w fyne.Window, uc fyne.URIReadCloser) {
+	split := container.NewHSplit(
+		container.New(layout.NewCenterLayout(), drawObject(uc, global.UIFFile.Root)...),
+		drawHierarchy(w, uc, global.UIFFile),
+	)
+	split.Offset = 0.5
+	w.SetContent(split)
+	//w.Resize(split.MinSize().Max(fyne.NewPos(512, 512)))
+	w.Canvas().Refresh(split)
+	w.Content().Refresh()
+}
+
 func drawObject(uc fyne.URIReadCloser, obj *uif.Object) []fyne.CanvasObject {
 	arr := []fyne.CanvasObject{}
+	if !obj.Visible {
+		return arr
+	}
+
 	for _, ch := range obj.Children {
 		arr = append(arr, drawObject(uc, ch)...)
 	}
@@ -96,7 +104,7 @@ func drawObject(uc fyne.URIReadCloser, obj *uif.Object) []fyne.CanvasObject {
 	return arr
 }
 
-func drawHierarchy(w fyne.Window, uifFile *uif.UIFFile) fyne.CanvasObject {
+func drawHierarchy(w fyne.Window, uc fyne.URIReadCloser, uifFile *uif.UIFFile) fyne.CanvasObject {
 	data := map[string][]string{}
 	objects := map[string]*uif.Object{}
 	for _, child := range uifFile.Root.Children {
@@ -105,25 +113,26 @@ func drawHierarchy(w fyne.Window, uifFile *uif.UIFFile) fyne.CanvasObject {
 
 	data[""] = []string{uifFile.Root.ID}
 	objects[uifFile.Root.ID] = uifFile.Root
-	tree := widget.NewTreeWithStrings(data)
-	tree.OpenAllBranches()
+	propertiesTree = widget.NewTreeWithStrings(data)
+	propertiesTree.OpenAllBranches()
 
 	props := container.NewBorder(nil, nil, nil, nil)
 	props.Hide()
 
-	tree.OnSelected = func(uid widget.TreeNodeID) {
+	propertiesTree.OnSelected = func(uid widget.TreeNodeID) {
 		obj, ok := objects[uid]
 		if !ok {
 			log.Println("Object not found!")
 			return
 		}
 
-		drawProperties(obj, props)
+		selectedPropUID = uid
+		drawProperties(w, uc, obj, props)
 		w.Canvas().Refresh(props)
 		fmt.Printf("%+v\n", obj)
 	}
 
-	return container.NewBorder(nil, nil, nil, nil, container.NewVSplit(tree, container.New(layout.NewAdaptiveGridLayout(1), props)))
+	return container.NewBorder(nil, nil, nil, nil, container.NewVSplit(propertiesTree, container.New(layout.NewAdaptiveGridLayout(1), props)))
 }
 
 func getChildren(data *map[string][]string, objects *map[string]*uif.Object, parent, child *uif.Object) {
@@ -134,7 +143,7 @@ func getChildren(data *map[string][]string, objects *map[string]*uif.Object, par
 	(*objects)[child.ID] = child
 }
 
-func drawProperties(obj *uif.Object, props *fyne.Container) {
+func drawProperties(w fyne.Window, uc fyne.URIReadCloser, obj *uif.Object, props *fyne.Container) {
 	props.Objects = []fyne.CanvasObject{}
 
 	idWidget := widget.NewEntry()
@@ -180,12 +189,21 @@ func drawProperties(obj *uif.Object, props *fyne.Container) {
 	closeSounWidget := widget.NewEntry()
 	closeSounWidget.SetText(obj.SoundClose)
 
+	visiblityWidget := widget.NewCheck("", nil)
+	visiblityWidget.SetChecked(obj.Visible)
+	visiblityWidget.OnChanged = func(b bool) {
+		obj.Visible = b
+		refreshUIFEditor(w, uc)
+		propertiesTree.Select(selectedPropUID)
+	}
+
 	_props := widget.NewAccordion(
 		widget.NewAccordionItem("Common",
 			widget.NewForm(
 				widget.NewFormItem("ID", idWidget),
 				widget.NewFormItem("Name", nameWidget),
 				widget.NewFormItem("Type", typeWidget),
+				widget.NewFormItem("Visible", visiblityWidget),
 				widget.NewFormItem("Rectangle", rectAcc),
 				widget.NewFormItem("Tooltip", tooltipWidget),
 				widget.NewFormItem("Open Sound", openSoundWidget),
