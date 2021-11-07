@@ -3,6 +3,7 @@ package file
 import (
 	xdOpen "dxt-editor/dialog/open"
 	"dxt-editor/dxt"
+	"dxt-editor/global"
 	"dxt-editor/uif"
 	"fmt"
 	"image"
@@ -35,10 +36,10 @@ func OpenUIFMenuItem(w fyne.Window) *fyne.MenuItem {
 				return
 			}
 
-			uifFile := uif.NewBuffer(data).ParseUIF()
+			global.UIFFile = uif.NewBuffer(data).ParseUIF()
 			split := container.NewHSplit(
-				container.New(layout.NewCenterLayout(), drawObject(uifFile.Root)...),
-				drawHierarchy(w, uifFile),
+				container.New(layout.NewCenterLayout(), drawObject(global.UIFFile.Root)...),
+				drawHierarchy(w, global.UIFFile),
 			)
 			split.Offset = 0.5
 
@@ -144,45 +145,95 @@ func drawProperties(obj *uif.Object, props *fyne.Container) {
 	heightRectWidget := widget.NewEntry()
 	heightRectWidget.SetText(fmt.Sprintf("%d", obj.Rect.Max.Y-obj.Rect.Min.Y))
 
-	_props := []fyne.CanvasObject{container.NewCenter(widget.NewLabel("Common")),
-		widget.NewSeparator(),
-		widget.NewForm(
-			widget.NewFormItem("ID", idWidget),
-			widget.NewFormItem("Name", nameWidget),
-			widget.NewFormItem("Type", typeWidget),
+	rectAcc := widget.NewAccordion(
+		widget.NewAccordionItem("[Object]",
+			widget.NewForm(
+				widget.NewFormItem("X", xRectWidget),
+				widget.NewFormItem("Y", yRectWidget),
+				widget.NewFormItem("Width", widthRectWidget),
+				widget.NewFormItem("Height", heightRectWidget),
+			),
 		),
-		widget.NewSeparator(),
-		container.NewCenter(widget.NewLabel("Rectangle")),
-		widget.NewSeparator(),
-		widget.NewForm(
-			widget.NewFormItem("X", xRectWidget),
-			widget.NewFormItem("Y", yRectWidget),
-			widget.NewFormItem("Width", widthRectWidget),
-			widget.NewFormItem("Height", heightRectWidget),
+	)
+	rectAcc.MultiOpen = true
+	//rectAcc.OpenAll()
+
+	tooltipWidget := widget.NewEntry()
+	tooltipWidget.SetText(obj.Tooltip)
+
+	openSoundWidget := widget.NewEntry()
+	openSoundWidget.SetText(obj.SoundOpen)
+
+	closeSounWidget := widget.NewEntry()
+	closeSounWidget.SetText(obj.SoundClose)
+
+	_props := widget.NewAccordion(
+		widget.NewAccordionItem("Common",
+			widget.NewForm(
+				widget.NewFormItem("ID", idWidget),
+				widget.NewFormItem("Name", nameWidget),
+				widget.NewFormItem("Type", typeWidget),
+				widget.NewFormItem("Rectangle", rectAcc),
+				widget.NewFormItem("Tooltip", tooltipWidget),
+				widget.NewFormItem("Open Sound", openSoundWidget),
+				widget.NewFormItem("Close Sound", closeSounWidget),
+			),
 		),
-	}
+	)
+	_props.MultiOpen = true
 
 	if obj.Type.String() != "" {
-		_props = append(_props,
-			widget.NewSeparator(),
-			container.NewCenter(widget.NewLabel(obj.Type.String())),
-			widget.NewSeparator(),
-		)
+		var acItem fyne.CanvasObject
+
+		switch obj.Type {
+		case uif.OT_IMAGE:
+			dxtWidget := widget.NewEntry()
+			dxtWidget.SetText(obj.Texture)
+
+			x0CropWidget := widget.NewEntry()
+			x0CropWidget.SetText(fmt.Sprintf("%f", obj.Crop.Min.X))
+
+			y0CropWidget := widget.NewEntry()
+			y0CropWidget.SetText(fmt.Sprintf("%f", obj.Crop.Min.Y))
+
+			x1CropWidget := widget.NewEntry()
+			x1CropWidget.SetText(fmt.Sprintf("%f", obj.Crop.Max.X))
+
+			y1CropWidget := widget.NewEntry()
+			y1CropWidget.SetText(fmt.Sprintf("%f", obj.Crop.Max.Y))
+
+			cropAcc := widget.NewAccordion(
+				widget.NewAccordionItem("[Object]",
+					widget.NewForm(
+						widget.NewFormItem("X0", x0CropWidget),
+						widget.NewFormItem("Y0", y0CropWidget),
+						widget.NewFormItem("X1", x1CropWidget),
+						widget.NewFormItem("Y1", y1CropWidget),
+					),
+				),
+			)
+			cropAcc.MultiOpen = true
+			//cropAcc.OpenAll()
+
+			animFrameWidget := widget.NewEntry()
+			animFrameWidget.SetText(fmt.Sprintf("%f", obj.AnimationFrame))
+
+			acItem = widget.NewForm(
+				widget.NewFormItem("Texture", dxtWidget),
+				widget.NewFormItem("Crop", cropAcc),
+				widget.NewFormItem("Anim. Rate", animFrameWidget),
+			)
+		}
+
+		if acItem != nil {
+			_props.Items = append(_props.Items, widget.NewAccordionItem(obj.Type.String(), acItem))
+		}
 	}
 
-	switch obj.Type {
-	case uif.OT_IMAGE:
-		dxtWidget := widget.NewEntry()
-		dxtWidget.SetText(obj.Texture)
-		_props = append(_props,
-			widget.NewForm(
-				widget.NewFormItem("Texture", dxtWidget),
-			),
-		)
-	}
+	_props.OpenAll()
 
 	props.Add(container.NewVScroll(
-		container.NewVBox(_props...),
+		container.NewVBox(_props),
 	))
 	props.Show()
 }
