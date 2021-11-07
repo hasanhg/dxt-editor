@@ -99,7 +99,7 @@ func drawHierarchy(uifFile *uif.UIFFile) fyne.CanvasObject {
 		fmt.Printf("%+v\n", obj)
 	}
 
-	return container.NewBorder(nil, nil, nil, nil, tree)
+	return container.NewBorder(nil, nil, nil, nil, container.NewVSplit(tree, nil))
 }
 
 func getChildren(data *map[string][]string, objects *map[string]*uif.Object, parent, child *uif.Object) {
